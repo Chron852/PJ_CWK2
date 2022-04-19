@@ -82,6 +82,39 @@ build CMakeFiles/edit_cache.util: CUSTOM_COMMAND
 
 build edit_cache: phony CMakeFiles/edit_cache.util
 
+# =============================================================================
+# Object build statements for EXECUTABLE target main
+
+
+#############################################
+# Order-only phony target for main
+
+build cmake_object_order_depends_target_main: phony || CMakeFiles/main.dir
+
+build CMakeFiles/main.dir/main.c.obj: C_COMPILER__main_Debug E$:/LEARNING/LEEDS/YEAR_TWO_semester2/programming_project/coursework2/Project/main.c || cmake_object_order_depends_target_main
+  DEP_FILE = CMakeFiles\main.dir\main.c.obj.d
+  FLAGS = -g -std=gnu99
+  OBJECT_DIR = CMakeFiles\main.dir
+  OBJECT_FILE_DIR = CMakeFiles\main.dir
+
+
+# =============================================================================
+# Link build statements for EXECUTABLE target main
+
+
+#############################################
+# Link the executable main.exe
+
+build main.exe: C_EXECUTABLE_LINKER__main_Debug CMakeFiles/main.dir/main.c.obj
+  FLAGS = -g
+  LINK_LIBRARIES = -lkernel32 -luser32 -lgdi32 -lwinspool -lshell32 -lole32 -loleaut32 -luuid -lcomdlg32 -ladvapi32
+  OBJECT_DIR = CMakeFiles\main.dir
+  POST_BUILD = cd .
+  PRE_LINK = cd .
+  TARGET_FILE = main.exe
+  TARGET_IMPLIB = libmain.dll.a
+  TARGET_PDB = main.exe.dbg
+
 
 #############################################
 # Utility command for rebuild_cache
@@ -99,6 +132,8 @@ build rebuild_cache: phony CMakeFiles/rebuild_cache.util
 
 build Project: phony libProject.a
 
+build main: phony main.exe
+
 # =============================================================================
 # Folder targets.
 
@@ -107,7 +142,7 @@ build Project: phony libProject.a
 #############################################
 # Folder: E:/LEARNING/LEEDS/YEAR_TWO_semester2/programming_project/coursework2/Project/cmake-build-debug
 
-build all: phony libProject.a
+build all: phony libProject.a main.exe
 
 # =============================================================================
 # Built-in targets
