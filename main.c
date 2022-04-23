@@ -9,11 +9,17 @@ typedef struct data
     float length;
 }data;
 
+typedef struct node{
+    int ID_origin;//ID_origin is to store nodes that have not been reassigned
+    int ID_normal;// ID_normal is to store nodes that have been reassigned
+    float lat;
+    float lon;
+}node;
+
 float matrix[5000][5000];
 data Data[5000];
+node Node[5000];
 float dist[5000];
-int ID_origin[5000],ID_normal[5000];//ID_origin is to store nodes that have not been reassigned
-// ID_normal is to store nodes that have been reassigned
 int sum = 0,num = 0;//sum is the number of edges and num is the number of nodes
 
 void loadmap(char *filename){
@@ -35,7 +41,9 @@ void loadmap(char *filename){
         if(strstr(buf,"node id")){
             sscanf(buf,"<node id=%s lat=%s lon=%s /node>",&a10,&a11,&a12);
             num++;
-            ID_origin[num] = atoi(a10);
+            Node[num].ID_origin = atoi(a10);
+            Node[num].lat = atof(a11);
+            Node[num].lon = atof(a12);
         }
     }
     fclose(f);
@@ -43,29 +51,34 @@ void loadmap(char *filename){
     for(int i = 1;i<=num;i++){
         tmp = i;
         for(int j = i + 1;j<=num;j++){
-            if(ID_origin[j]<ID_origin[tmp]){
+            if(Node[j].ID_origin<Node[tmp].ID_origin){
                 tmp = j;
             }
         }
         if(tmp != i){
-            int temp = ID_origin[i];
-            ID_origin[i] = ID_origin[tmp];
-            ID_origin[tmp] = temp;
+            int temp = Node[i].ID_origin;
+            Node[i].ID_origin = Node[tmp].ID_origin;
+            Node[tmp].ID_origin = temp;
+            float tempp = Node[i].lat;
+            Node[i].lat = Node[tmp].lat;
+            Node[tmp].lat = tempp;
+            tempp = Node[i].lon;
+            Node[i].lon = Node[tmp].lon;
+            Node[tmp].lon = tempp;
         }
     }
     for(int i = 1;i <= num;i++){
-        ID_normal[i] = i;
-//        printf("%d\t%d\n",ID_origin[i],ID_normal[i]);
+        Node[i].ID_normal = i;
     }
     for(int i = 1;i <= sum;i++){
         int flag1 = 0,flag2 = 0;
         for(int j = 1;j <= num;j++){
-            if(Data[i].start == ID_origin[j] && flag1 == 0){
-                Data[i].start = ID_normal[j];
+            if(Data[i].start == Node[j].ID_origin && flag1 == 0){
+                Data[i].start = Node[j].ID_normal;
                 flag1 = 1;
             }
-            if(Data[i].end == ID_origin[j] && flag2 == 0){
-                Data[i].end = ID_normal[j];
+            if(Data[i].end == Node[j].ID_origin && flag2 == 0){
+                Data[i].end = Node[j].ID_normal;
                 flag2 = 1;
             }
         }
@@ -110,20 +123,34 @@ float dijkstra(int start,int end)
 
 int main(void){
     loadmap("Final_Map.map");
-    int end,start;
+    int end,start,end1,start1;
+    printf("Please enter the start point:");
+    scanf("%i",&start);
+    printf("Please enter the end point:");
+    scanf("%i",&end);
+    for(int i = 1;i < 5000;i++){
+        if(Node[i].ID_origin == start){
+            start1 = Node[i].ID_normal;
+            break;
+        }
+    }
+    for(int i = 1;i < 5000;i++){
+        if(Node[i].ID_origin == end){
+            end1 = Node[i].ID_normal;
+            break;
+        }
+    }
     for(int j = 1;j<=5000;j++){
-        end = j;
-        start = 765;
-        double test = dijkstra(start,end);
+        double test = dijkstra(start1,end1);
         for(int i = 1;i < 5000;i++){
-            if(start == ID_normal[i]){
-                start = ID_origin[i];
+            if(start == Node[i].ID_normal){
+                start = Node[i].ID_origin;
                 break;
             }
         }
         for(int i = 1;i < 5000;i++){
-            if(end == ID_normal[i]){
-                end = ID_origin[i];
+            if(end == Node[i].ID_normal){
+                end = Node[i].ID_origin;
                 break;
             }
         }
