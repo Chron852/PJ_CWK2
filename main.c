@@ -14,6 +14,7 @@ typedef struct node{
     int ID_normal;// ID_normal is to store nodes that have been reassigned
     float lat;
     float lon;
+    int prev;
 }node;
 
 float matrix[5000][5000];
@@ -100,6 +101,7 @@ float dijkstra(int start,int end)
     for(int i = 1;i <= num; i++){
         dist[i] = 100000;
         flag[i] = 0;
+        Node[i].prev = Node[i].ID_normal;
     }
     dist[start]=0;
     for(int i = 0; i <num; i++)
@@ -114,6 +116,7 @@ float dijkstra(int start,int end)
         for(int j = 1; j <= num; j++) {
             if(dist[j] > (dist[t] + matrix[t][j])){
                 dist[j] = dist[t] + matrix[t][j];
+                Node[j].prev = t;
             }
         }
     }
@@ -123,7 +126,7 @@ float dijkstra(int start,int end)
 
 int main(void){
     loadmap("Final_Map.map");
-    int end,start,end1,start1;
+    int end,start,end1 = 0,start1 = 0;
     printf("Please enter the start point:");
     scanf("%i",&start);
     printf("Please enter the end point:");
@@ -140,26 +143,18 @@ int main(void){
             break;
         }
     }
-    for(int j = 1;j<=5000;j++){
-        double test = dijkstra(start1,end1);
-        for(int i = 1;i < 5000;i++){
-            if(start == Node[i].ID_normal){
-                start = Node[i].ID_origin;
-                break;
-            }
+    double test = dijkstra(start1,end1);
+    if(test != 0){
+        int k = end1;
+        printf("%d <--- ",Node[end1].ID_origin);
+        while(Node[k].prev != start1){
+            k = Node[k].prev;
+            printf("%d <--- ",Node[k].ID_origin);
         }
-        for(int i = 1;i < 5000;i++){
-            if(end == Node[i].ID_normal){
-                end = Node[i].ID_origin;
-                break;
-            }
-        }
-        if(test != 0){
-            printf("%d ---> %d:%f\n",start,end,test);
-        }
-        else{
-            printf("%d ---> %d:no\n",start,end);
-        }
+        printf("%d:%f\n",start,test);
+    }
+    else{
+        printf("%d ---> %d:no\n",start,end);
     }
 }
 
