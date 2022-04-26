@@ -6,26 +6,30 @@ typedef struct data
 {
     int start;
     int end;
-    float length;
+    long double length;
 }data;
 
 typedef struct node{
     int ID_origin;//ID_origin is to store nodes that have not been reassigned
     int ID_normal;// ID_normal is to store nodes that have been reassigned
-    float lat;
-    float lon;
+    long double lat;
+    long double lon;
     int prev;
 }node;
 
-float matrix[5000][5000];
+long double matrix[5000][5000];
 data Data[5000];
 node Node[5000];
-float dist[5000],dist_floyd[5000][5000];
+long double dist[5000],dist_floyd[5000][5000];
 int pass[5000][5000];
 int sum = 0,num = 0;//sum is the number of edges and num is the number of nodes
 
 void loadmap(char *filename){
     FILE *f = fopen(filename,"r");
+    if(f == NULL){
+        printf("this file dose not exist!\n");
+        exit(0);
+    }
     char buf[1024];
     char a1[100],a2[100],a3[100],a4[100],a5[100],a6[100],a7[100],a8[100],a9[100],a10[100],a11[100],a12[100];
     while(fgets(buf,1024,f)){
@@ -96,7 +100,7 @@ void loadmap(char *filename){
     }
 }
 
-float dijkstra(int start,int end)
+long double dijkstra(int start,int end)
 {
     int flag[5000];
     for(int i = 1;i <= num; i++){
@@ -180,35 +184,43 @@ void print(int i,int j)
 }
 
 int main(void){
+    int i;
     loadmap("Final_Map.map");
     int end,start,end1 = 0,start1 = 0;
     printf("Please enter the start point:");
     scanf("%d",&start);
-    printf("Please enter the end point:");
-    scanf("%d",&end);
-    start = 1615404345;
-    for(int i = 1;i < 5000;i++){
+    for(i = 1;i < 5000;i++){
         if(Node[i].ID_origin == start){
             start1 = Node[i].ID_normal;
             break;
         }
     }
-    for(int i = 1;i < 5000;i++){
+    if(i == 5000){
+        printf("The start node does not exist!\n");
+        return 0;
+    }
+    printf("Please enter the end point:");
+    scanf("%d",&end);
+    for(i = 1;i < 5000;i++){
         if(Node[i].ID_origin == end){
             end1 = Node[i].ID_normal;
             break;
         }
     }
-    double test = dijkstra(start1,end1);
+    if(i == 5000){
+        printf("The end node does not exist!\n");
+        return 0;
+    }
+    double test = dijkstra(end1,start1);
     printf("Dijkstra:\n");
-    if(test != 0){
-        int k = end1;
-        printf("%d <--- ",Node[end1].ID_origin);
-        while(Node[k].prev != start1){
+    if(test != 10000000){
+        int k = start1;
+        printf("%d ---> ",Node[start1].ID_origin);
+        while(Node[k].prev != end1){
             k = Node[k].prev;
-            printf("%d <--- ",Node[k].ID_origin);
+            printf("%d ---> ",Node[k].ID_origin);
         }
-        printf("%d:%f\n",start,test);
+        printf("%d:%f\n",end,test);
     }
     else{
         printf("%d ---> %d:no\n",start,end);
@@ -218,4 +230,3 @@ int main(void){
 //    printf("%f\n",dist_floyd[start1][end1]);
 //    print(start1,end1);
 }
-
