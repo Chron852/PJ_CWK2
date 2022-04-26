@@ -20,7 +20,8 @@ typedef struct node{
 float matrix[5000][5000];
 data Data[5000];
 node Node[5000];
-float dist[5000];
+float dist[5000],dist_floyd[5000][5000];
+int pass[5000][5000];
 int sum = 0,num = 0;//sum is the number of edges and num is the number of nodes
 
 void loadmap(char *filename){
@@ -120,17 +121,72 @@ float dijkstra(int start,int end)
             }
         }
     }
-    if(dist[end] == 100000) return 0;
+    if(dist[end] == 100000) return 10000000;
     return dist[end];
+}
+
+// this is another arithmetic to compute out the best path.
+// However, it is too slow thus I just write down invoke code but annotate it.
+// If you want to test it, you could free annotation.
+// The running time is about 2 minutes.
+void floyd() {
+    for(int i = 1;i < 5000;i++){
+        for(int j = 1;j < 5000;j++){
+            dist_floyd[i][j] = 100000;
+            pass[i][j] = -1;
+        }
+    }
+    for(int i = 1;i <= sum;i++){
+        dist_floyd[Data[i].start][Data[i].end] = Data[i].length;
+        dist_floyd[Data[i].end][Data[i].start] = Data[i].length;
+        pass[Data[i].start][Data[i].end] = 0;
+        pass[Data[i].end][Data[i].start] = 0;
+    }
+    for (int k = 1; k <= num; k++){
+        for (int i = 1; i <= num; i++) {
+            for (int j = 1; j <= num; j++) {
+                if (dist_floyd[i][j] > dist_floyd[i][k] + dist_floyd[k][j]) {
+                    dist_floyd[i][j] = dist_floyd[i][k] + dist_floyd[k][j];
+                    pass[i][j] = k;
+                }
+            }
+        }
+    }
+}
+
+// this function is to list out the beat path of the arithmetic of Floyd
+void print(int i,int j)
+{
+    if(i==j) return;
+    if(pass[i][j]==0){
+        for(int k = 1;k <= num;k++){
+            if(i == Node[k].ID_normal){
+                i = Node[k].ID_origin;
+                break;
+            }
+        }
+        for(int k = 1;k <= num;k++){
+            if(j == Node[k].ID_normal){
+                j = Node[k].ID_origin;
+                break;
+            }
+        }
+        printf("%d->%d\n",i,j);
+    }
+    else{
+        print(i,pass[i][j]);
+        print(pass[i][j],j);
+    }
 }
 
 int main(void){
     loadmap("Final_Map.map");
     int end,start,end1 = 0,start1 = 0;
     printf("Please enter the start point:");
-    scanf("%i",&start);
+    scanf("%d",&start);
     printf("Please enter the end point:");
-    scanf("%i",&end);
+    scanf("%d",&end);
+    start = 1615404345;
     for(int i = 1;i < 5000;i++){
         if(Node[i].ID_origin == start){
             start1 = Node[i].ID_normal;
@@ -144,6 +200,7 @@ int main(void){
         }
     }
     double test = dijkstra(start1,end1);
+    printf("Dijkstra:\n");
     if(test != 0){
         int k = end1;
         printf("%d <--- ",Node[end1].ID_origin);
@@ -156,5 +213,9 @@ int main(void){
     else{
         printf("%d ---> %d:no\n",start,end);
     }
+//    printf("Floyd:\n");
+//    floyd();
+//    printf("%f\n",dist_floyd[start1][end1]);
+//    print(start1,end1);
 }
 
