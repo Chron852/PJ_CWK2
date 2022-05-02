@@ -17,22 +17,32 @@ typedef struct node{
     int prev;
 }node;
 
-long double matrix[5000][5000];
-data Data[5000];
-node Node[5000];
-long double dist[5000],dist_floyd[5000][5000];
-int pass[5000][5000];
+long double **matrix;
+data *Data;
+node *Node;
+long double *dist,**dist_floyd;
+int **pass;
 int sum = 0,num = 0;//sum is the number of edges and num is the number of nodes
 
 void loadmap(char *filename){
+    char a1[100],a2[100],a3[100],a4[100],a5[100],a6[100],a7[100],a8[100],a9[100],a10[100],a11[100],a12[100];
     FILE *f = fopen(filename,"r");
     if(f == NULL){
         printf("this file dose not exist!\n");
         exit(0);
     }
     char buf[1024];
-    char a1[100],a2[100],a3[100],a4[100],a5[100],a6[100],a7[100],a8[100],a9[100],a10[100],a11[100],a12[100];
+    sum = 0;
     while(fgets(buf,1024,f)){
+        if(strstr(buf,"link id")){
+            sum++;
+        }
+    }
+    fclose(f);
+    Data = (data *)malloc((sum + 1) * sizeof (data));
+    sum = 0;
+    FILE *g = fopen(filename,"r");
+    while(fgets(buf,1024,g)){
         if(strstr(buf,"link id")){
             sscanf(buf,"<link id=%s node=%s node=%s way=%s length=%s veg=%s arch=%s land=%s POI=%s;/link>",&a1,&a2,&a3,&a4,&a5,&a6,&a7,&a8,&a9);
             sum++;
@@ -41,9 +51,19 @@ void loadmap(char *filename){
             Data[sum].length = atof(a5);
         }
     }
-    fclose(f);
-    f = fopen(filename,"r");
-    while(fgets(buf,1024,f)){
+    fclose(g);
+    FILE *h = fopen(filename,"r");
+    while(fgets(buf,1024,h)){
+        if(strstr(buf,"node id")){
+            num++;
+        }
+    }
+    fclose(h);
+    Node = (node *)malloc((num + 1) * sizeof (node));
+    dist = (long double*)malloc((num + 1) * sizeof (long double));
+    num = 0;
+    FILE *v = fopen(filename,"r");
+    while(fgets(buf,1024,v)){
         if(strstr(buf,"node id")){
             sscanf(buf,"<node id=%s lat=%s lon=%s /node>",&a10,&a11,&a12);
             num++;
@@ -52,7 +72,7 @@ void loadmap(char *filename){
             Node[num].lon = atof(a12);
         }
     }
-    fclose(f);
+    fclose(v);
     int tmp;
     for(int i = 1;i<=num;i++){
         tmp = i;
@@ -65,7 +85,7 @@ void loadmap(char *filename){
             int temp = Node[i].ID_origin;
             Node[i].ID_origin = Node[tmp].ID_origin;
             Node[tmp].ID_origin = temp;
-            float tempp = Node[i].lat;
+            long double tempp = Node[i].lat;
             Node[i].lat = Node[tmp].lat;
             Node[tmp].lat = tempp;
             tempp = Node[i].lon;
@@ -89,8 +109,16 @@ void loadmap(char *filename){
             }
         }
     }
-    for(int i = 1;i < 5000;i++){
-        for(int j = 1;j < 5000;j++){
+    matrix = (long double**)malloc((num + 1) * sizeof (long double*));
+    pass = (int**)malloc((num + 1) * sizeof (int*));
+    dist_floyd = (long double**)malloc((num + 1) * sizeof (long double*));
+    for(int i = 1;i <= num;i++){
+        matrix[i] = (long double*)malloc((num + 1)* sizeof (long double));
+        pass[i] = (int*)malloc((num + 1)* sizeof (int));
+        dist_floyd = (long double*)malloc((num + 1) * sizeof (long double));
+    }
+    for(int i = 1;i <= num;i++){
+        for(int j = 1;j <= num;j++){
             matrix[i][j] = 100000;
         }
     }
@@ -102,7 +130,8 @@ void loadmap(char *filename){
 
 long double dijkstra(int start,int end)
 {
-    int flag[5000];
+    int *flag;
+    flag = malloc(num * sizeof (int));
     for(int i = 1;i <= num; i++){
         dist[i] = 100000;
         flag[i] = 0;
@@ -134,8 +163,8 @@ long double dijkstra(int start,int end)
 // If you want to test it, you could free annotation.
 // The running time is about 2 minutes.
 void floyd() {
-    for(int i = 1;i < 5000;i++){
-        for(int j = 1;j < 5000;j++){
+    for(int i = 1;i <= num;i++){
+        for(int j = 1;j <= num;j++){
             dist_floyd[i][j] = 100000;
             pass[i][j] = -1;
         }
@@ -189,29 +218,29 @@ int main(void){
     int end,start,end1 = 0,start1 = 0;
     printf("Please enter the start point:");
     scanf("%d",&start);
-    for(i = 1;i < 5000;i++){
+    for(i = 1;i <= num;i++){
         if(Node[i].ID_origin == start){
             start1 = Node[i].ID_normal;
             break;
         }
     }
-    if(i == 5000){
+    if(i == num + 1){
         printf("The start node does not exist!\n");
         return 0;
     }
     printf("Please enter the end point:");
     scanf("%d",&end);
-    for(i = 1;i < 5000;i++){
+    for(i = 1;i <= num;i++){
         if(Node[i].ID_origin == end){
             end1 = Node[i].ID_normal;
             break;
         }
     }
-    if(i == 5000){
+    if(i == num + 1){
         printf("The end node does not exist!\n");
         return 0;
     }
-    double test = dijkstra(end1,start1);
+    long double test = dijkstra(end1,start1);
     printf("Dijkstra:\n");
     if(test != 10000000){
         int k = start1;
@@ -220,7 +249,7 @@ int main(void){
             k = Node[k].prev;
             printf("%d ---> ",Node[k].ID_origin);
         }
-        printf("%d:%f\n",end,test);
+        printf("%d:%Lf\n",end,test);
     }
     else{
         printf("%d ---> %d:no\n",start,end);
