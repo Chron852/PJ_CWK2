@@ -115,7 +115,7 @@ void loadmap(char *filename){
     for(int i = 1;i <= num;i++){
         matrix[i] = (long double*)malloc((num + 1)* sizeof (long double));
         pass[i] = (int*)malloc((num + 1)* sizeof (int));
-        dist_floyd = (long double*)malloc((num + 1) * sizeof (long double));
+        dist_floyd[i] = (long double*)malloc((num + 1) * sizeof (long double));
     }
     for(int i = 1;i <= num;i++){
         for(int j = 1;j <= num;j++){
@@ -240,22 +240,33 @@ int main(void){
         printf("The end node does not exist!\n");
         return 0;
     }
-    long double test = dijkstra(end1,start1);
-    printf("Dijkstra:\n");
-    if(test != 10000000){
-        int k = start1;
-        printf("%d ---> ",Node[start1].ID_origin);
-        while(Node[k].prev != end1){
-            k = Node[k].prev;
-            printf("%d ---> ",Node[k].ID_origin);
+    int c;
+    printf("Please enter the arithmetic you want to choose:\n\t0.exit\n\t1.Floyd\n\t2.Dijkstra\nYour choice:");
+    scanf("%d",&c);
+    while(c!=1&&c!=2&&c!=0){
+        printf("Please reenter the choice:");
+        scanf("%d",&c);
+    }
+    if(c == 2){
+        long double test = dijkstra(end1,start1);
+        printf("Dijkstra:\n");
+        if(test != 10000000){
+            int k = start1;
+            printf("%d ---> ",Node[start1].ID_origin);
+            while(Node[k].prev != end1){
+                k = Node[k].prev;
+                printf("%d ---> ",Node[k].ID_origin);
+            }
+            printf("%d:%Lf\n",end,test);
         }
-        printf("%d:%Lf\n",end,test);
+        else{
+            printf("%d ---> %d:no\n",start,end);
+        }
+    }else if(c == 1){
+        printf("Floyd:\n");
+        printf("This arithmetic takes too much time! Please waiting patiently!\n");
+        floyd();
+        printf("%Lf\n",dist_floyd[start1][end1]);
+        print(start1,end1);
     }
-    else{
-        printf("%d ---> %d:no\n",start,end);
-    }
-//    printf("Floyd:\n");
-//    floyd();
-//    printf("%f\n",dist_floyd[start1][end1]);
-//    print(start1,end1);
 }
