@@ -263,6 +263,7 @@ void paint(int start,int end){
         k = Node[k].prev;
     }
     int x = 0,y = 0;
+    int a = 2,b = 2;
     while(quit == 0){
         SDL_PollEvent(&event);
         switch(event.type){
@@ -277,20 +278,46 @@ void paint(int start,int end){
                     SDL_RenderClear(renderer);
                     SDL_SetRenderDrawColor(renderer,255,255,255,255);
                     for(int i = 1;i <= num;i++){
-                        SDL_RenderDrawPoint(renderer,Node[i].ave_lat+x,Node[i].ave_lon+y);
+                        SDL_RenderDrawPoint(renderer,(Node[i].ave_lat + x) * a / b,(Node[i].ave_lon + y) * a / b);
                     }
                     for(int i = 1;i <= sum;i++){
                         start2 = Data[i].start;
                         end2 = Data[i].end;
-                        SDL_RenderDrawLine(renderer,Node[start2].ave_lat+x,Node[start2].ave_lon+y,Node[end2].ave_lat+x,Node[end2].ave_lon+y);
+                        SDL_RenderDrawLine(renderer,(Node[start2].ave_lat + x)* a / b,(Node[start2].ave_lon + y) * a / b,(Node[end2].ave_lat + x) * a / b,(Node[end2].ave_lon + y) * a / b);
                     }
                     SDL_SetRenderDrawColor(renderer,255,0,0,255);
                     k = start;
                     while(k != end){
-                        SDL_RenderDrawLine(renderer,Node[k].ave_lat+x,Node[k].ave_lon+y,Node[Node[k].prev].ave_lat+x,Node[Node[k].prev].ave_lon+y);
+                        SDL_RenderDrawLine(renderer,(Node[k].ave_lat + x) * a / b,(Node[k].ave_lon + y) * a / b,(Node[Node[k].prev].ave_lat + x) * a / b,(Node[Node[k].prev].ave_lon + y) * a / b);
                         k = Node[k].prev;
                     }
                 }
+                break;
+            case SDL_MOUSEWHEEL:
+                if(event.wheel.y > 0){
+                    a++;
+                }
+                else if(event.wheel.y < 0){
+                    b++;
+                }
+                SDL_SetRenderDrawColor(renderer,0,0,0,255);
+                SDL_RenderClear(renderer);
+                SDL_SetRenderDrawColor(renderer,255,255,255,255);
+                for(int i = 1;i <= num;i++){
+                    SDL_RenderDrawPoint(renderer,(Node[i].ave_lat + x) * a / b,(Node[i].ave_lon + y) * a / b);
+                }
+                for(int i = 1;i <= sum;i++){
+                    start2 = Data[i].start;
+                    end2 = Data[i].end;
+                    SDL_RenderDrawLine(renderer,(Node[start2].ave_lat + x) * a / b,(Node[start2].ave_lon + y) * a / b,(Node[end2].ave_lat + x) * a / b,(Node[end2].ave_lon + y) * a / b);
+                }
+                SDL_SetRenderDrawColor(renderer,255,0,0,255);
+                k = start;
+                while(k != end){
+                    SDL_RenderDrawLine(renderer,(Node[k].ave_lat + x) * a / b,(Node[k].ave_lon + y) * a / b,(Node[Node[k].prev].ave_lat + x) * a / b,(Node[Node[k].prev].ave_lon + y) * a / b);
+                    k = Node[k].prev;
+                }
+                break;
         }
         SDL_RenderPresent(renderer);
     }
