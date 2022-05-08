@@ -1,7 +1,6 @@
 #include<stdio.h>
 #include<string.h>
 #include<stdlib.h>
-#include<SDL2/SDL.h>
 
 typedef struct data
 {
@@ -14,9 +13,7 @@ typedef struct node{
     int ID_origin;//ID_origin is to store nodes that have not been reassigned
     int ID_normal;// ID_normal is to store nodes that have been reassigned
     long double lat;
-    int ave_lat;
     long double lon;
-    int ave_lon;
     int prev;
 }node;
 
@@ -28,8 +25,6 @@ int **pass;
 int sum = 0,num = 0;//sum is the number of edges and num is the number of nodes
 
 void loadmap(char *filename){
-    long double min_lat = 100;
-    long double min_lon = 100;
     char a1[100],a2[100],a3[100],a4[100],a5[100],a6[100],a7[100],a8[100],a9[100],a10[100],a11[100],a12[100];
     FILE *f = fopen(filename,"r");
     if(f == NULL){
@@ -75,12 +70,6 @@ void loadmap(char *filename){
             Node[num].ID_origin = atoi(a10);
             Node[num].lat = atof(a11);
             Node[num].lon = atof(a12);
-            if(Node[num].lat < min_lat){
-                min_lat = Node[num].lat;
-            }
-            if(Node[num].lon < min_lon){
-                min_lon = Node[num].lon;
-            }
         }
     }
     fclose(v);
@@ -106,8 +95,6 @@ void loadmap(char *filename){
     }
     for(int i = 1;i <= num;i++){
         Node[i].ID_normal = i;
-        Node[i].ave_lon = (int)((Node[i].lon - min_lon) * 100000);
-        Node[i].ave_lat = (int)((Node[i].lat - min_lat) * 100000);
     }
     for(int i = 1;i <= sum;i++){
         int flag1 = 0,flag2 = 0;
@@ -225,109 +212,6 @@ void print(int i,int j)
     }
 }
 
-void paint(int start,int end){
-    SDL_Window *window;
-    SDL_Renderer *renderer;
-    SDL_Event event;
-    int quit = 0;
-    SDL_Init(SDL_INIT_VIDEO);
-    window = SDL_CreateWindow(
-            "MAP",
-            SDL_WINDOWPOS_UNDEFINED,
-            SDL_WINDOWPOS_UNDEFINED,
-            700,
-            700,
-            SDL_WINDOW_SHOWN
-    );
-    if(window == NULL){
-        printf("Could not create window: %s",SDL_GetError());
-        return;
-    }
-    renderer = SDL_CreateRenderer(window,-1,0);
-    SDL_SetRenderDrawColor(renderer,0,0,0,255);
-    SDL_RenderClear(renderer);
-    SDL_SetRenderDrawColor(renderer,255,255,255,255);
-    for(int i = 1;i <= num;i++){
-        SDL_RenderDrawPoint(renderer,Node[i].ave_lat,Node[i].ave_lon);
-    }
-    int start2,end2;
-    for(int i = 1;i <= sum;i++){
-        start2 = Data[i].start;
-        end2 = Data[i].end;
-        SDL_RenderDrawLine(renderer,Node[start2].ave_lat,Node[start2].ave_lon,Node[end2].ave_lat,Node[end2].ave_lon);
-    }
-    SDL_SetRenderDrawColor(renderer,255,0,0,255);
-    int k = start;
-    while(k != end){
-        SDL_RenderDrawLine(renderer,Node[k].ave_lat,Node[k].ave_lon,Node[Node[k].prev].ave_lat,Node[Node[k].prev].ave_lon);
-        k = Node[k].prev;
-    }
-    int x = 0,y = 0;
-    int a = 2,b = 2;
-    while(quit == 0){
-        SDL_PollEvent(&event);
-        switch(event.type){
-            case SDL_QUIT:
-                quit = 1;
-                break;
-            case SDL_MOUSEMOTION:
-                if(event.motion.state == SDL_PRESSED){
-                    x += event.motion.xrel;
-                    y += event.motion.yrel;
-                    SDL_SetRenderDrawColor(renderer,0,0,0,255);
-                    SDL_RenderClear(renderer);
-                    SDL_SetRenderDrawColor(renderer,255,255,255,255);
-                    for(int i = 1;i <= num;i++){
-                        SDL_RenderDrawPoint(renderer,(Node[i].ave_lat + x) * a / b,(Node[i].ave_lon + y) * a / b);
-                    }
-                    for(int i = 1;i <= sum;i++){
-                        start2 = Data[i].start;
-                        end2 = Data[i].end;
-                        SDL_RenderDrawLine(renderer,(Node[start2].ave_lat + x)* a / b,(Node[start2].ave_lon + y) * a / b,(Node[end2].ave_lat + x) * a / b,(Node[end2].ave_lon + y) * a / b);
-                    }
-                    SDL_SetRenderDrawColor(renderer,255,0,0,255);
-                    k = start;
-                    while(k != end){
-                        SDL_RenderDrawLine(renderer,(Node[k].ave_lat + x) * a / b,(Node[k].ave_lon + y) * a / b,(Node[Node[k].prev].ave_lat + x) * a / b,(Node[Node[k].prev].ave_lon + y) * a / b);
-                        k = Node[k].prev;
-                    }
-                }
-                break;
-            case SDL_MOUSEWHEEL:
-                if(event.wheel.y > 0){
-                    a++;
-                }
-                else if(event.wheel.y < 0){
-                    b++;
-                }
-                SDL_SetRenderDrawColor(renderer,0,0,0,255);
-                SDL_RenderClear(renderer);
-                SDL_SetRenderDrawColor(renderer,255,255,255,255);
-                for(int i = 1;i <= num;i++){
-                    SDL_RenderDrawPoint(renderer,(Node[i].ave_lat + x) * a / b,(Node[i].ave_lon + y) * a / b);
-                }
-                for(int i = 1;i <= sum;i++){
-                    start2 = Data[i].start;
-                    end2 = Data[i].end;
-                    SDL_RenderDrawLine(renderer,(Node[start2].ave_lat + x) * a / b,(Node[start2].ave_lon + y) * a / b,(Node[end2].ave_lat + x) * a / b,(Node[end2].ave_lon + y) * a / b);
-                }
-                SDL_SetRenderDrawColor(renderer,255,0,0,255);
-                k = start;
-                while(k != end){
-                    SDL_RenderDrawLine(renderer,(Node[k].ave_lat + x) * a / b,(Node[k].ave_lon + y) * a / b,(Node[Node[k].prev].ave_lat + x) * a / b,(Node[Node[k].prev].ave_lon + y) * a / b);
-                    k = Node[k].prev;
-                }
-                break;
-        }
-        SDL_RenderPresent(renderer);
-    }
-    if(renderer){
-        SDL_DestroyRenderer(renderer);
-    }
-    SDL_DestroyWindow(window);
-    SDL_Quit();
-}
-
 int main(void){
     int i;
     loadmap("Final_Map.map");
@@ -382,9 +266,7 @@ int main(void){
         printf("Floyd:\n");
         printf("This arithmetic takes too much time! Please waiting patiently!\n");
         floyd();
-        dijkstra(start1,end1);
         printf("%Lf\n",dist_floyd[start1][end1]);
         print(start1,end1);
     }
-    paint(start1,end1);
 }
