@@ -2,6 +2,7 @@
 #include<string.h>
 #include<stdlib.h>
 #include<SDL2/SDL.h>
+#include<ui.h>
 
 // the struct data is to load the edges of map
 typedef struct data
@@ -28,6 +29,9 @@ node *Node;
 long double *dist,**dist_floyd;
 int **pass;// the passing node that the arithmetic Floyd calculated
 int sum = 0,num = 0;//sum is the number of edges and num is the number of nodes
+int endi,starti,endk = 0,startk = 0; // the starti and endi are the origin Node ID and startk and endk are the simplified Node ID
+uiEntry *s,*e;// the entry box of start and end Node
+uiLabel *best;// the label is to list the best path
 
 
 //this function is to load map files
@@ -142,6 +146,10 @@ void loadmap(char *filename){
         pass[i] = (int*)malloc((num + 1)* sizeof (int));
         dist_floyd[i] = (long double*)malloc((num + 1) * sizeof (long double));
     }
+}
+
+long double dijkstra(int start,int end)
+{
     // to initial the pointers
     for(int i = 1;i <= num;i++){
         for(int j = 1;j <= num;j++){
@@ -152,10 +160,6 @@ void loadmap(char *filename){
         matrix[Data[i].start][Data[i].end] = Data[i].length;
         matrix[Data[i].end][Data[i].start] = Data[i].length;
     }
-}
-
-long double dijkstra(int start,int end)
-{
     // if the node ID does not exist, exit the program
     if(start > num || end > num){
         printf("The Node does not exist!\n");
@@ -197,6 +201,16 @@ long double dijkstra(int start,int end)
 // If you want to test it, you could free annotation.
 // The running time is about 2 minutes.
 void floyd() {
+    // to initial the pointers
+    for(int i = 1;i <= num;i++){
+        for(int j = 1;j <= num;j++){
+            matrix[i][j] = 100000;
+        }
+    }
+    for(int i = 1;i<=sum;i++){
+        matrix[Data[i].start][Data[i].end] = Data[i].length;
+        matrix[Data[i].end][Data[i].start] = Data[i].length;
+    }
     for(int i = 1;i <= num;i++){
         for(int j = 1;j <= num;j++){
             dist_floyd[i][j] = 100000;
@@ -363,73 +377,177 @@ void paint(int start,int end){
     SDL_DestroyWindow(window);
     SDL_Quit();
 }
+int onClosing(uiWindow *w, void *data)
+{
+    uiQuit();
+    return 1;
+}
 
-int main(int argc,char **argv){
+void onClicked_Dijkstra(uiButton *b, void *data)
+{
     int i;
-    char *file = "Final_Map.map";
-    if(argc == 2){
-        strcpy(file,argv[1]);
-    }
-    loadmap(file);
-    int end,start,end1 = 0,start1 = 0;
-    // get the input
-    printf("Please enter the start point:");
-    scanf("%d",&start);
+    char c[1000],ex1[100] = "The start node does not exist",ex2[100] = "The end node dose not exist";
+    starti = atoi(uiEntryText(s));
+    endi = atoi(uiEntryText(e));
     for(i = 1;i <= num;i++){
-        if(Node[i].ID_origin == start){
-            start1 = Node[i].ID_normal;
+        if(Node[i].ID_origin == starti){
+            startk = Node[i].ID_normal;
+            break;
+        }
+    }
+    if(i == num + 1){
+        uiLabelSetText(best,ex1);
+    }else{
+        for(i = 1;i <= num;i++){
+            if(Node[i].ID_origin == endi){
+                endk = Node[i].ID_normal;
+                break;
+            }
+        }
+        if(i == num + 1){
+            uiLabelSetText(best,ex2);
+        }else{
+            long double test = dijkstra(endk,startk);
+            if(test != 10000000){
+                int k = startk;
+                sprintf(c,"%d",Node[startk].ID_origin);
+                strcat(c," ---> \n");
+                while(Node[k].prev != endk){
+                    k = Node[k].prev;
+                    char rem[100];
+                    sprintf(rem,"%d",Node[k].ID_origin);
+                    strcat(c,rem);
+                    strcat(c," ---> \n");
+                }
+                char rem[100];
+                sprintf(rem,"%d",endi);
+                strcat(c,rem);
+                strcat(c,":");
+                sprintf(rem,"%Lf",test);
+                strcat(c,rem);
+            }
+            else{
+                char rem[100];
+                sprintf(rem,"%d",starti);
+                strcat(c,rem);
+                strcat(c," ---> ");
+                sprintf(rem,"%d",endi);
+                strcat(c,rem);
+                strcat(c,":No");
+            }
+            uiLabelSetText(best,c);
+        }
+        paint(startk,endk);
+    }
+}
+
+void onClicked_Floyd(uiButton *b, void *data)
+{
+    int i;
+    starti = atoi(uiEntryText(s));
+    endi = atoi(uiEntryText(e));
+    for(i = 1;i <= num;i++){
+        if(Node[i].ID_origin == starti){
+            startk = Node[i].ID_normal;
             break;
         }
     }
     if(i == num + 1){
         printf("The start node does not exist!\n");
-        return 0;
-    }
-    printf("Please enter the end point:");
-    scanf("%d",&end);
-    for(i = 1;i <= num;i++){
-        if(Node[i].ID_origin == end){
-            end1 = Node[i].ID_normal;
-            break;
-        }
-    }
-    if(i == num + 1){
-        printf("The end node does not exist!\n");
-        return 0;
-    }
-    int c;
-    // choose the arithmetic to get the best path
-    printf("Please enter the arithmetic you want to choose:\n\t0.exit\n\t1.Floyd\n\t2.Dijkstra\nYour choice:");
-    scanf("%d",&c);
-    while(c!=1&&c!=2&&c!=0){
-        printf("Please reenter the choice:");
-        scanf("%d",&c);
-    }
-    if(c == 2){
-        // the dijkstra arithmetic
-        long double test = dijkstra(end1,start1);
-        printf("Dijkstra:\n");
-        if(test != 10000000){
-            int k = start1;
-            printf("%d ---> ",Node[start1].ID_origin);
-            while(Node[k].prev != end1){
-                k = Node[k].prev;
-                printf("%d ---> ",Node[k].ID_origin);
+    }else{
+        for(i = 1;i <= num;i++){
+            if(Node[i].ID_origin == endi){
+                endk = Node[i].ID_normal;
+                break;
             }
-            printf("%d:%Lf\n",end,test);
         }
-        else{
-            printf("%d ---> %d:no\n",start,end);
+        if(i == num + 1){
+            printf("The end node does not exist!\n");
+        }else{
+            printf("Floyd:\n");
+            printf("This arithmetic takes too much time! Please waiting patiently!\n");
+            floyd();
+            dijkstra(startk,endk);
+            printf("%Lf\n",dist_floyd[startk][endk]);
+            print(startk,endk);
+            paint(startk,endk);
         }
-    }else if(c == 1){
-        // the Floyd arithmetic
-        printf("Floyd:\n");
-        printf("This arithmetic takes too much time! Please waiting patiently!\n");
-        floyd();
-        dijkstra(start1,end1);
-        printf("%Lf\n",dist_floyd[start1][end1]);
-        print(start1,end1);
     }
-    // to visualize the map
-    paint(start1,end1);
+}
+
+void GUI(void)
+{
+    uiInitOptions o;
+    const char *err;
+    uiWindow *w;
+    uiGrid *g;
+    uiLabel *start,*end,*path;
+    uiButton *d,*f;
+
+    memset(&o, 0, sizeof(uiInitOptions));
+    err = uiInit(&o);
+    if (err != NULL) {
+        puts(err);
+        uiFreeInitError(err);
+        return;
+    }
+
+    // create Window
+    w = uiNewWindow("GUI", 500, 240, 0);
+    uiWindowSetMargined(w, 1);
+
+    // create Grid
+    g = uiNewGrid();
+    uiGridSetPadded(g, 1);
+    uiWindowSetChild(w, uiControl(g));
+
+    // create Label
+    start = uiNewLabel("Start Node:");
+    uiGridAppend(g, uiControl(start),
+                 0, 2, 2, 1,
+                 1, uiAlignCenter, 1, uiAlignFill);
+    s = uiNewEntry();
+    uiGridAppend(g, uiControl(s),
+                 0, 3, 2, 1,
+                 1, uiAlignCenter, 1, uiAlignFill);
+    end = uiNewLabel("End Node:");
+    uiGridAppend(g, uiControl(end),
+                 0, 4, 1, 1,
+                 1, uiAlignCenter, 1, uiAlignFill);
+    e = uiNewEntry();
+    uiGridAppend(g, uiControl(e),
+                 0, 5, 2, 1,
+                 1, uiAlignCenter, 1, uiAlignFill);
+    path = uiNewLabel("Best Path:");
+    uiGridAppend(g, uiControl(path),
+                 0, 6, 2, 1,
+                 1, uiAlignCenter, 1, uiAlignFill);
+    best = uiNewLabel("");
+    uiGridAppend(g, uiControl(best),
+                 0, 7, 2, 1,
+                 1, uiAlignCenter, 1, uiAlignFill);
+    // create the calculate button
+    d = uiNewButton("Calculate(Dijkstra)");
+    uiButtonOnClicked(d, onClicked_Dijkstra, best);
+    uiGridAppend(g, uiControl(d),
+                 0, 10, 2, 1,
+                 1, uiAlignCenter, 1, uiAlignEnd);
+    f = uiNewButton("Calculate(Floyd)");
+    uiButtonOnClicked(f, onClicked_Floyd, best);
+    uiGridAppend(g, uiControl(f),
+                 0, 11, 2, 1,
+                 1, uiAlignCenter, 1, uiAlignEnd);
+    uiWindowOnClosing(w, onClosing, NULL);
+    uiControlShow(uiControl(w));
+    uiMain();
+    return;
+}
+
+int main(int argc,char **argv){
+    char *file = "Final_Map.map";
+    if(argc == 2){
+        strcpy(file,argv[1]);
+    }
+    loadmap(file);
+    GUI();
 }
