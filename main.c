@@ -22,7 +22,7 @@ typedef struct node{
     int ave_lon;// the lon that has been changed to fix for the map
     int prev;// the node that the best path has passed before this node
 }node;
-
+int fl = 0;
 long double **matrix;
 data *Data;
 node *Node;
@@ -32,6 +32,7 @@ int sum = 0,num = 0;//sum is the number of edges and num is the number of nodes
 int endi,starti,endk = 0,startk = 0; // the starti and endi are the origin Node ID and startk and endk are the simplified Node ID
 uiEntry *s,*e;// the entry box of start and end Node
 uiLabel *best;// the label is to list the best path
+char c_floyd[1000];// this array is to load the passing node of FLoyd
 
 
 //this function is to load map files
@@ -256,7 +257,13 @@ void print(int i,int j)
                 break;
             }
         }
-        printf("%d->%d\n",i,j);
+        char rem[100];
+        sprintf(rem,"%d",i);
+        strcat(c_floyd,rem);
+        strcat(c_floyd," ---> ");
+        sprintf(rem,"%d",j);
+        strcat(c_floyd,rem);
+        strcat(c_floyd,"\n");
     }
     else{
         print(i,pass[i][j]);
@@ -386,6 +393,7 @@ int onClosing(uiWindow *w, void *data)
 void onClicked_Dijkstra(uiButton *b, void *data)
 {
     int i;
+    fl = 0;
     char c[1000],ex1[100] = "The start node does not exist",ex2[100] = "The end node dose not exist";
     starti = atoi(uiEntryText(s));
     endi = atoi(uiEntryText(e));
@@ -425,6 +433,7 @@ void onClicked_Dijkstra(uiButton *b, void *data)
                 strcat(c,":");
                 sprintf(rem,"%Lf",test);
                 strcat(c,rem);
+                fl = 1;
             }
             else{
                 char rem[100];
@@ -433,17 +442,19 @@ void onClicked_Dijkstra(uiButton *b, void *data)
                 strcat(c," ---> ");
                 sprintf(rem,"%d",endi);
                 strcat(c,rem);
-                strcat(c,":No");
+                strcat(c,":No\n");
             }
+            strcat(c,"\nPlease close the GUI to see the map");
             uiLabelSetText(best,c);
         }
-        paint(startk,endk);
     }
 }
 
 void onClicked_Floyd(uiButton *b, void *data)
 {
     int i;
+    fl = 0;
+    strcpy(c_floyd,"");
     starti = atoi(uiEntryText(s));
     endi = atoi(uiEntryText(e));
     for(i = 1;i <= num;i++){
@@ -453,7 +464,7 @@ void onClicked_Floyd(uiButton *b, void *data)
         }
     }
     if(i == num + 1){
-        printf("The start node does not exist!\n");
+        strcat(c_floyd,"The start node does not exist!");
     }else{
         for(i = 1;i <= num;i++){
             if(Node[i].ID_origin == endi){
@@ -462,17 +473,20 @@ void onClicked_Floyd(uiButton *b, void *data)
             }
         }
         if(i == num + 1){
-            printf("The end node does not exist!\n");
+            strcat(c_floyd,"The end node does not exist!");
         }else{
-            printf("Floyd:\n");
-            printf("This arithmetic takes too much time! Please waiting patiently!\n");
+            uiLabelSetText(best,"This arithmetic takes too much time! Please waiting patiently!\n");
             floyd();
-            dijkstra(startk,endk);
-            printf("%Lf\n",dist_floyd[startk][endk]);
+            dijkstra(endk,startk);
             print(startk,endk);
-            paint(startk,endk);
+            char rem[100];
+            sprintf(rem,"%Lf",dist_floyd[startk][endk]);
+            strcat(c_floyd,rem);
+            strcat(c_floyd,"\nPlease close the GUI to see the map");
+            fl = 1;
         }
     }
+    uiLabelSetText(best,c_floyd);
 }
 
 void GUI(void)
@@ -540,7 +554,6 @@ void GUI(void)
     uiWindowOnClosing(w, onClosing, NULL);
     uiControlShow(uiControl(w));
     uiMain();
-    return;
 }
 
 int main(int argc,char **argv){
@@ -550,4 +563,5 @@ int main(int argc,char **argv){
     }
     loadmap(file);
     GUI();
+    if(fl == 1) paint(startk,endk);
 }
